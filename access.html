@@ -131,7 +131,8 @@
         const SUPABASE_URL = 'https://iyqywaeydxaooinerjfc.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXl3YWV5ZHhhb29pbmVyamZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNDUyMTUsImV4cCI6MjA4MDgyMTIxNX0.AkQyHR9kL4s21h3NZxCBoGq58DwYsA3NxQww7wV2bEI'
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        const { createClient } = supabase
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         
         async function loadContent() {
             try {
@@ -150,7 +151,7 @@
                 
                 if (accessToken) {
                     // Get user from magic link session
-                    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken)
+                    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(accessToken)
                     
                     if (authError || !user) {
                         showError('Invalid magic link. Please request a new one.')
@@ -158,7 +159,7 @@
                     }
                     
                     // Get their notion link from database
-                    const { data: userData, error: dbError } = await supabase
+                    const { data: userData, error: dbError } = await supabaseClient
                         .from('paywall_users')
                         .select('notion_link')
                         .eq('email', user.email)
@@ -170,7 +171,7 @@
                     }
                     
                     // Update last accessed
-                    await supabase
+                    await supabaseClient
                         .from('paywall_users')
                         .update({ last_accessed: new Date().toISOString() })
                         .eq('email', user.email)
