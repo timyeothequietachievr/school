@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Your Content</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #718096;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: #718096;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.2s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .message.error {
+            background: #fee;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+        
+        .message.success {
+            background: #e6ffed;
+            color: #22543d;
+            border: 1px solid #68d391;
+        }
+        
+        .message.show {
+            display: block;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 6px;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Access Your Content</h1>
+        <p class="subtitle">Enter your credentials or request a magic link</p>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('password')">I have my password</button>
+            <button class="tab" onclick="switchTab('magic')">Email me a link</button>
+        </div>
+        
+        <div id="password-tab" class="tab-content active">
+            <form id="password-form" onsubmit="handlePasswordLogin(event)">
+                <div class="form-group">
+                    <label for="email-pass">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email-pass" 
+                        required 
+                        placeholder="you@example.com"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Your Unique Password</label>
+                    <input 
+                        type="text" 
+                        id="password" 
+                        required 
+                        placeholder="BLUE-TIGER-1234"
+                    >
+                    <p class="help-text">Check your email for the password sent after purchase</p>
+                </div>
+                
+                <button type="submit" id="password-btn">
+                    Access Content
+                </button>
+            </form>
+        </div>
+        
+        <div id="magic-tab" class="tab-content">
+            <form id="magic-form" onsubmit="handleMagicLink(event)">
+                <div class="form-group">
+                    <label for="email-magic">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email-magic" 
+                        required 
+                        placeholder="you@example.com"
+                    >
+                    <p class="help-text">We'll send you a magic link to access your content</p>
+                </div>
+                
+                <button type="submit" id="magic-btn">
+                    Send Magic Link
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
+            
+            if (tab === 'password') {
+                document.querySelector('.tabs .tab:first-child').classList.add('active')
+                document.getElementById('password-tab').classList.add('active')
+            } else {
+                document.querySelector('.tabs .tab:last-child').classList.add('active')
+                document.getElementById('magic-tab').classList.add('active')
+            }
+            
+            hideMessage()
+        }
+        
+        function showMessage(text, type) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `message ${type} show`
+        }
+        
+        function hideMessage() {
+            document.getElementById('message').className = 'message'
+        }
+        
+        async function handlePasswordLogin(e) {
+            e.preventDefault()
+            
+            const btn = document.getElementById('password-btn')
+            const email = document.getElementById('email-pass').value.trim()
+            const password = document.getElementById('password').value.trim()
+            
+            btn.disabled = true
+            btn.innerHTML = 'Validating<span class="loader"></span>'
+            hideMessage()
+            
+            try {
+                const { data, error } = await supabase
+                    .from('paywall_users')
+                    .select('notion_link, unique_password')
+                    .eq('email', email)
+                    .single()
+                
+                if (error || !data) {
+                    showMessage('Email not found. Did you complete your purchase?', 'error')
+                    btn.disabled = false
+                    btn.innerHTML = 'Access Content'
+                    return
+                }
+                
+                if (data.unique_password !== password) {
+                    showMessage('Incorrect password. Check your email for the correct password.', 'error')
+                    btn.disabled = false
+                    btn.innerHTML = 'Access Content'
+                    return
+                }
+                
+                // Update last accessed
+                await supabase
+                    .from('paywall_users')
+                    .update({ last_accessed: new Date().toISOString() })
+                    .eq('email', email)
+                
+                // Store in session and redirect
+                sessionStorage.setItem('notion_link', data.notion_link)
+                sessionStorage.setItem('user_email', email)
+                window.location.href = 'access.html'
+                
+            } catch (err) {
+                showMessage('An error occurred. Please try again.', 'error')
+                btn.disabled = false
+                btn.innerHTML = 'Access Content'
+            }
+        }
+        
+        async function handleMagicLink(e) {
+            e.preventDefault()
+            
+            const btn = document.getElementById('magic-btn')
+            const email = document.getElementById('email-magic').value.trim()
+            
+            btn.disabled = true
+            btn.innerHTML = 'Sending<span class="loader"></span>'
+            hideMessage()
+            
+            try {
+                // First check if email exists in our database
+                const { data: userData, error: checkError } = await supabase
+                    .from('paywall_users')
+                    .select('email')
+                    .eq('email', email)
+                    .single()
+                
+                if (checkError || !userData) {
+                    showMessage('Email not found. Please complete your purchase first.', 'error')
+                    btn.disabled = false
+                    btn.innerHTML = 'Send Magic Link'
+                    return
+                }
+                
+                // Send magic link
+                const { error } = await supabase.auth.signInWithOtp({
+                    email: email,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/notion-paywall/access.html`
+                    }
+                })
+                
+                if (error) throw error
+                
+                showMessage('Magic link sent! Check your email inbox.', 'success')
+                btn.disabled = false
+                btn.innerHTML = 'Send Magic Link'
+                
+            } catch (err) {
+                showMessage('Failed to send magic link. Please try again.', 'error')
+                btn.disabled = false
+                btn.innerHTML = 'Send Magic Link'
+            }
+        }
+    </script>
+</body>
+</html>
