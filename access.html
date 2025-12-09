@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Content</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f7fafc;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            color: #1a202c;
+        }
+        
+        .user-info {
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        .content-container {
+            width: 100%;
+            height: calc(100vh - 60px);
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100vh - 60px);
+            color: #718096;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .error h2 {
+            color: #c53030;
+            margin-bottom: 16px;
+        }
+        
+        .error p {
+            color: #718096;
+            margin-bottom: 24px;
+        }
+        
+        .error button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .error button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Your Premium Content</h1>
+        <div class="user-info" id="user-info"></div>
+    </div>
+    
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading your content...</p>
+    </div>
+    
+    <div id="error" class="error" style="display: none;">
+        <h2>⚠️ Access Denied</h2>
+        <p id="error-message">Unable to verify your access. Please log in again.</p>
+        <button onclick="window.location.href='index.html'">Return to Login</button>
+    </div>
+    
+    <div id="content" class="content-container" style="display: none;"></div>
+
+    <script>
+        // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        async function loadContent() {
+            try {
+                // Check if came from password login
+                const notionLink = sessionStorage.getItem('notion_link')
+                const userEmail = sessionStorage.getItem('user_email')
+                
+                if (notionLink && userEmail) {
+                    displayContent(notionLink, userEmail)
+                    return
+                }
+                
+                // Check if came from magic link
+                const hashParams = new URLSearchParams(window.location.hash.substring(1))
+                const accessToken = hashParams.get('access_token')
+                
+                if (accessToken) {
+                    // Get user from magic link session
+                    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken)
+                    
+                    if (authError || !user) {
+                        showError('Invalid magic link. Please request a new one.')
+                        return
+                    }
+                    
+                    // Get their notion link from database
+                    const { data: userData, error: dbError } = await supabase
+                        .from('paywall_users')
+                        .select('notion_link')
+                        .eq('email', user.email)
+                        .single()
+                    
+                    if (dbError || !userData) {
+                        showError('Access not found. Please contact support.')
+                        return
+                    }
+                    
+                    // Update last accessed
+                    await supabase
+                        .from('paywall_users')
+                        .update({ last_accessed: new Date().toISOString() })
+                        .eq('email', user.email)
+                    
+                    displayContent(userData.notion_link, user.email)
+                    return
+                }
+                
+                // No valid session found
+                showError('No active session. Please log in.')
+                
+            } catch (err) {
+                console.error('Error:', err)
+                showError('An unexpected error occurred.')
+            }
+        }
+        
+        function displayContent(notionLink, email) {
+            document.getElementById('loading').style.display = 'none'
+            document.getElementById('content').style.display = 'block'
+            document.getElementById('user-info').textContent = email
+            
+            // Create iframe for Notion content
+            const iframe = document.createElement('iframe')
+            iframe.src = notionLink
+            iframe.allow = 'fullscreen'
+            document.getElementById('content').appendChild(iframe)
+        }
+        
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none'
+            document.getElementById('error').style.display = 'block'
+            document.getElementById('error-message').textContent = message
+        }
+        
+        // Load content on page load
+        loadContent()
+    </script>
+</body>
+</html>
