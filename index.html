@@ -245,10 +245,11 @@
 
     <script>
         // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE
-        const SUPABASE_URL = 'https://iyqywaeydxaooinerjfc.supabase.co/rest/v1/paywall_users'
+        const SUPABASE_URL = 'https://iyqywaeydxaooinerjfc.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXl3YWV5ZHhhb29pbmVyamZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNDUyMTUsImV4cCI6MjA4MDgyMTIxNX0.AkQyHR9kL4s21h3NZxCBoGq58DwYsA3NxQww7wV2bEI'
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        const { createClient } = supabase
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
@@ -287,7 +288,7 @@
             hideMessage()
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('paywall_users')
                     .select('notion_link, unique_password')
                     .eq('email', email)
@@ -308,7 +309,7 @@
                 }
                 
                 // Update last accessed
-                await supabase
+                await supabaseClient
                     .from('paywall_users')
                     .update({ last_accessed: new Date().toISOString() })
                     .eq('email', email)
