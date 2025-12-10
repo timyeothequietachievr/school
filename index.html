@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Quiet Achiever School</title>
+    <title>Access Your Content</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -184,7 +184,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>The Quiet Achiever School</h1>
+        <h1>🔐 Access Your Content</h1>
         <p class="subtitle">Enter your credentials or request a magic link</p>
         
         <div id="message" class="message"></div>
@@ -218,7 +218,7 @@
                 </div>
                 
                 <button type="submit" id="password-btn">
-                    Sign In
+                    Access Content
                 </button>
             </form>
         </div>
@@ -244,7 +244,6 @@
     </div>
 
     <script>
-        // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE
         const SUPABASE_URL = 'https://iyqywaeydxaooinerjfc.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXl3YWV5ZHhhb29pbmVyamZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNDUyMTUsImV4cCI6MjA4MDgyMTIxNX0.AkQyHR9kL4s21h3NZxCBoGq58DwYsA3NxQww7wV2bEI'
         
@@ -338,7 +337,7 @@
             
             try {
                 // First check if email exists in our database
-                const { data: userData, error: checkError } = await supabase
+                const { data: userData, error: checkError } = await supabaseClient
                     .from('paywall_users')
                     .select('email')
                     .eq('email', email)
@@ -351,22 +350,35 @@
                     return
                 }
                 
-                // Send magic link
-                const { error } = await supabase.auth.signInWithOtp({
+                // Send magic link - use the GitHub Pages URL
+                const redirectURL = 'https://timyeothequietachievr.github.io/school/access.html'
+                
+                console.log('Sending magic link to:', email)
+                console.log('Redirect URL:', redirectURL)
+                
+                const { data, error } = await supabaseClient.auth.signInWithOtp({
                     email: email,
                     options: {
-                        emailRedirectTo: `${window.location.origin}/notion-paywall/access.html`
+                        emailRedirectTo: redirectURL
                     }
                 })
                 
-                if (error) throw error
+                if (error) {
+                    console.error('Magic link error:', error)
+                    showMessage(`Error: ${error.message}`, 'error')
+                    btn.disabled = false
+                    btn.innerHTML = 'Send Magic Link'
+                    return
+                }
                 
-                showMessage('Magic link sent! Check your email inbox.', 'success')
+                console.log('Magic link response:', data)
+                showMessage('Magic link sent! Check your email inbox (and spam folder).', 'success')
                 btn.disabled = false
                 btn.innerHTML = 'Send Magic Link'
                 
             } catch (err) {
-                showMessage('Failed to send magic link. Please try again.', 'error')
+                console.error('Unexpected error:', err)
+                showMessage(`Failed to send magic link: ${err.message}`, 'error')
                 btn.disabled = false
                 btn.innerHTML = 'Send Magic Link'
             }

@@ -32,9 +32,72 @@
             color: #1a202c;
         }
         
+        .user-menu {
+            position: relative;
+        }
+        
         .user-info {
             font-size: 14px;
             color: #718096;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-info:hover {
+            background: #f7fafc;
+        }
+        
+        .dropdown-arrow {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .dropdown-arrow.open {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            color: #4a5568;
+            border-bottom: 1px solid #f7fafc;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background: #f7fafc;
+        }
+        
+        .dropdown-item.danger {
+            color: #e53e3e;
         }
         
         .content-container {
@@ -105,34 +168,355 @@
         .error button:hover {
             background: #5568d3;
         }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-content h2 {
+            color: #1a202c;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+        
+        .modal-content .subtitle {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .success-page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .success-page.show {
+            display: flex;
+        }
+        
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+        
+        .success-page h1 {
+            color: #1a202c;
+            margin-bottom: 16px;
+            font-size: 32px;
+        }
+        
+        .success-page p {
+            color: #718096;
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+        
+        .success-page button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .alert.error {
+            background: #fee;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+        
+        .alert.success {
+            background: #e6ffed;
+            color: #22543d;
+            border: 1px solid #68d391;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Welcome</h1>
-        <div class="user-info" id="user-info"></div>
+    <div id="main-content">
+        <div class="header">
+            <h1>🎯 Your Premium Content</h1>
+            <div class="user-menu">
+                <div class="user-info" id="user-info" onclick="toggleDropdown()">
+                    <span id="user-email"></span>
+                    <span class="dropdown-arrow" id="dropdown-arrow">▼</span>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu">
+                    <div class="dropdown-item" onclick="openChangePassword()">
+                        🔑 Change Password
+                    </div>
+                    <div class="dropdown-item danger" onclick="logout()">
+                        🚪 Log Out
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading your content...</p>
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            <h2>⚠️ Access Denied</h2>
+            <p id="error-message">Unable to verify your access. Please log in again.</p>
+            <button onclick="window.location.href='index.html'">Return to Login</button>
+        </div>
+        
+        <div id="content" class="content-container" style="display: none;"></div>
     </div>
     
-    <div id="loading" class="loading">
-        <div class="spinner"></div>
-        <p>Loading your content...</p>
+    <!-- Change Password Modal -->
+    <div class="modal" id="change-password-modal">
+        <div class="modal-content">
+            <h2>Change Password</h2>
+            <p class="subtitle">Enter your new password below</p>
+            
+            <div id="modal-alert"></div>
+            
+            <form id="change-password-form" onsubmit="handleChangePassword(event)">
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="text" id="current-password" required placeholder="BLUE-TIGER-1234">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="text" id="new-password" required placeholder="RED-EAGLE-5678">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="text" id="confirm-password" required placeholder="RED-EAGLE-5678">
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeChangePassword()">Cancel</button>
+                    <button type="submit" class="btn-primary" id="change-password-btn">Update Password</button>
+                </div>
+            </form>
+        </div>
     </div>
     
-    <div id="error" class="error" style="display: none;">
-        <h2>⚠️ Access Denied</h2>
-        <p id="error-message">Unable to verify your access. Please log in again.</p>
+    <!-- Logout Success Page -->
+    <div class="success-page" id="logout-success">
+        <div class="success-icon">👋</div>
+        <h1>Successfully Logged Out</h1>
+        <p>You have been securely logged out of your account.</p>
         <button onclick="window.location.href='index.html'">Return to Login</button>
     </div>
-    
-    <div id="content" class="content-container" style="display: none;"></div>
 
     <script>
-        // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE
         const SUPABASE_URL = 'https://iyqywaeydxaooinerjfc.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXl3YWV5ZHhhb29pbmVyamZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNDUyMTUsImV4cCI6MjA4MDgyMTIxNX0.AkQyHR9kL4s21h3NZxCBoGq58DwYsA3NxQww7wV2bEI'
         
         const { createClient } = supabase
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        let currentUserEmail = null
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const userMenu = document.querySelector('.user-menu')
+            if (!userMenu.contains(e.target)) {
+                document.getElementById('dropdown-menu').classList.remove('show')
+                document.getElementById('dropdown-arrow').classList.remove('open')
+            }
+        })
+        
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdown-menu')
+            const arrow = document.getElementById('dropdown-arrow')
+            menu.classList.toggle('show')
+            arrow.classList.toggle('open')
+        }
+        
+        function openChangePassword() {
+            toggleDropdown()
+            document.getElementById('change-password-modal').classList.add('show')
+            document.getElementById('modal-alert').innerHTML = ''
+            document.getElementById('change-password-form').reset()
+        }
+        
+        function closeChangePassword() {
+            document.getElementById('change-password-modal').classList.remove('show')
+        }
+        
+        async function handleChangePassword(e) {
+            e.preventDefault()
+            
+            const currentPassword = document.getElementById('current-password').value.trim()
+            const newPassword = document.getElementById('new-password').value.trim()
+            const confirmPassword = document.getElementById('confirm-password').value.trim()
+            const btn = document.getElementById('change-password-btn')
+            const alertDiv = document.getElementById('modal-alert')
+            
+            // Validation
+            if (newPassword !== confirmPassword) {
+                alertDiv.innerHTML = '<div class="alert error">New passwords do not match</div>'
+                return
+            }
+            
+            if (newPassword === currentPassword) {
+                alertDiv.innerHTML = '<div class="alert error">New password must be different from current password</div>'
+                return
+            }
+            
+            btn.disabled = true
+            btn.textContent = 'Updating...'
+            
+            try {
+                // Verify current password
+                const { data: userData, error: fetchError } = await supabaseClient
+                    .from('paywall_users')
+                    .select('unique_password')
+                    .eq('email', currentUserEmail)
+                    .single()
+                
+                if (fetchError || !userData) {
+                    alertDiv.innerHTML = '<div class="alert error">Error verifying current password</div>'
+                    btn.disabled = false
+                    btn.textContent = 'Update Password'
+                    return
+                }
+                
+                if (userData.unique_password !== currentPassword) {
+                    alertDiv.innerHTML = '<div class="alert error">Current password is incorrect</div>'
+                    btn.disabled = false
+                    btn.textContent = 'Update Password'
+                    return
+                }
+                
+                // Update password
+                const { error: updateError } = await supabaseClient
+                    .from('paywall_users')
+                    .update({ unique_password: newPassword })
+                    .eq('email', currentUserEmail)
+                
+                if (updateError) {
+                    alertDiv.innerHTML = '<div class="alert error">Failed to update password</div>'
+                    btn.disabled = false
+                    btn.textContent = 'Update Password'
+                    return
+                }
+                
+                alertDiv.innerHTML = '<div class="alert success">Password updated successfully!</div>'
+                setTimeout(() => {
+                    closeChangePassword()
+                }, 2000)
+                
+            } catch (err) {
+                console.error('Error:', err)
+                alertDiv.innerHTML = '<div class="alert error">An unexpected error occurred</div>'
+                btn.disabled = false
+                btn.textContent = 'Update Password'
+            }
+        }
+        
+        function logout() {
+            toggleDropdown()
+            // Clear session
+            sessionStorage.clear()
+            // Show logout success page
+            document.getElementById('main-content').style.display = 'none'
+            document.getElementById('logout-success').classList.add('show')
+        }
         
         async function loadContent() {
             try {
@@ -190,9 +574,10 @@
         }
         
         function displayContent(notionLink, email) {
+            currentUserEmail = email
             document.getElementById('loading').style.display = 'none'
             document.getElementById('content').style.display = 'block'
-            document.getElementById('user-info').textContent = email
+            document.getElementById('user-email').textContent = email
             
             // Create iframe for Notion content
             const iframe = document.createElement('iframe')
