@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The QUiet Achiever School</title>
+    <title>Your Content</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -331,7 +331,7 @@
 <body>
     <div id="main-content">
         <div class="header">
-            <h1>The Quiet Achiever School</h1>
+            <h1>Welcome</h1>
             <div class="user-menu">
                 <div class="user-info" id="user-info" onclick="toggleDropdown()">
                     <span id="user-email"></span>
@@ -342,7 +342,7 @@
                         🔑 Change Password
                     </div>
                     <div class="dropdown-item danger" onclick="logout()">
-                        🚪 Sign Out
+                        🚪 Log Out
                     </div>
                 </div>
             </div>
@@ -350,7 +350,7 @@
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>Loading content...</p>
+            <p>Loading your content...</p>
         </div>
         
         <div id="error" class="error" style="display: none;">
@@ -411,6 +411,15 @@
         
         let currentUserEmail = null
         
+        // Hash password function using SHA-256
+        async function hashPassword(password) {
+            const encoder = new TextEncoder()
+            const data = encoder.encode(password)
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+            const hashArray = Array.from(new Uint8Array(hashBuffer))
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+        }
+        
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             const userMenu = document.querySelector('.user-menu')
@@ -462,6 +471,10 @@
             btn.textContent = 'Updating...'
             
             try {
+                // Hash both passwords
+                const hashedCurrentPassword = await hashPassword(currentPassword)
+                const hashedNewPassword = await hashPassword(newPassword)
+                
                 // Verify current password
                 const { data: userData, error: fetchError } = await supabaseClient
                     .from('paywall_users')
@@ -476,17 +489,18 @@
                     return
                 }
                 
-                if (userData.unique_password !== currentPassword) {
+                // Compare hashed passwords
+                if (userData.unique_password !== hashedCurrentPassword) {
                     alertDiv.innerHTML = '<div class="alert error">Current password is incorrect</div>'
                     btn.disabled = false
                     btn.textContent = 'Update Password'
                     return
                 }
                 
-                // Update password
+                // Update with new hashed password
                 const { error: updateError } = await supabaseClient
                     .from('paywall_users')
-                    .update({ unique_password: newPassword })
+                    .update({ unique_password: hashedNewPassword })
                     .eq('email', currentUserEmail)
                 
                 if (updateError) {
@@ -499,6 +513,8 @@
                 alertDiv.innerHTML = '<div class="alert success">Password updated successfully!</div>'
                 setTimeout(() => {
                     closeChangePassword()
+                    btn.disabled = false
+                    btn.textContent = 'Update Password'
                 }, 2000)
                 
             } catch (err) {
